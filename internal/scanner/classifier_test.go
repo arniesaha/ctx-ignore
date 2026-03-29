@@ -18,12 +18,12 @@ func TestClassifyLockfiles(t *testing.T) {
 		"pnpm-lock.yaml",
 	}
 	for _, name := range lockfiles {
-		level, cat := c.ClassifyPath(name, false)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", name, level)
+		cl := c.ClassifyPath(name, false)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", name, cl.Level)
 		}
-		if cat != CategoryLockfile {
-			t.Errorf("%s: expected CategoryLockfile, got %q", name, cat)
+		if cl.Category != CategoryLockfile {
+			t.Errorf("%s: expected CategoryLockfile, got %q", name, cl.Category)
 		}
 	}
 }
@@ -32,12 +32,12 @@ func TestClassifyDependencyDirs(t *testing.T) {
 	c := NewClassifier()
 	dirs := []string{"node_modules", "vendor", ".venv", "venv"}
 	for _, name := range dirs {
-		level, cat := c.ClassifyPath(name, true)
-		if level != NoiseLevelRed {
-			t.Errorf("%s/: expected NoiseLevelRed, got %d", name, level)
+		cl := c.ClassifyPath(name, true)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s/: expected NoiseLevelRed, got %d", name, cl.Level)
 		}
-		if cat != CategoryDependency {
-			t.Errorf("%s/: expected CategoryDependency, got %q", name, cat)
+		if cl.Category != CategoryDependency {
+			t.Errorf("%s/: expected CategoryDependency, got %q", name, cl.Category)
 		}
 	}
 }
@@ -46,12 +46,12 @@ func TestClassifyBuildDirs(t *testing.T) {
 	c := NewClassifier()
 	dirs := []string{"dist", "build", "out", "target"}
 	for _, name := range dirs {
-		level, cat := c.ClassifyPath(name, true)
-		if level != NoiseLevelRed {
-			t.Errorf("%s/: expected NoiseLevelRed, got %d", name, level)
+		cl := c.ClassifyPath(name, true)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s/: expected NoiseLevelRed, got %d", name, cl.Level)
 		}
-		if cat != CategoryBuildArtifact {
-			t.Errorf("%s/: expected CategoryBuildArtifact, got %q", name, cat)
+		if cl.Category != CategoryBuildArtifact {
+			t.Errorf("%s/: expected CategoryBuildArtifact, got %q", name, cl.Category)
 		}
 	}
 }
@@ -60,40 +60,59 @@ func TestClassifyMinifiedFiles(t *testing.T) {
 	c := NewClassifier()
 	files := []string{"bundle.min.js", "styles.min.css"}
 	for _, name := range files {
-		level, cat := c.ClassifyPath(name, false)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", name, level)
+		cl := c.ClassifyPath(name, false)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", name, cl.Level)
 		}
-		if cat != CategoryBuildArtifact {
-			t.Errorf("%s: expected CategoryBuildArtifact, got %q", name, cat)
+		if cl.Category != CategoryBuildArtifact {
+			t.Errorf("%s: expected CategoryBuildArtifact, got %q", name, cl.Category)
 		}
 	}
 }
 
 func TestClassifyGeneratedName(t *testing.T) {
 	c := NewClassifier()
-	files := []string{"api.pb.go", "schema.generated.ts"}
-	for _, name := range files {
-		level, cat := c.ClassifyPath(name, false)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", name, level)
+	cases := []struct {
+		name    string
+		pattern string
+	}{
+		{"api.pb.go", "*.pb.go"},
+		{"schema.generated.ts", "*.generated.*"},
+	}
+	for _, tc := range cases {
+		cl := c.ClassifyPath(tc.name, false)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, cl.Level)
 		}
-		if cat != CategoryGenerated {
-			t.Errorf("%s: expected CategoryGenerated, got %q", name, cat)
+		if cl.Category != CategoryGenerated {
+			t.Errorf("%s: expected CategoryGenerated, got %q", tc.name, cl.Category)
+		}
+		if cl.Pattern != tc.pattern {
+			t.Errorf("%s: expected pattern %q, got %q", tc.name, tc.pattern, cl.Pattern)
 		}
 	}
 }
 
 func TestClassifyTestFiles(t *testing.T) {
 	c := NewClassifier()
-	files := []string{"foo.test.ts", "bar.spec.js", "baz_test.go"}
-	for _, name := range files {
-		level, cat := c.ClassifyPath(name, false)
-		if level != NoiseLevelYellow {
-			t.Errorf("%s: expected NoiseLevelYellow, got %d", name, level)
+	cases := []struct {
+		name    string
+		pattern string
+	}{
+		{"foo.test.ts", "*.test.ts"},
+		{"bar.spec.js", "*.spec.js"},
+		{"baz_test.go", "*_test.go"},
+	}
+	for _, tc := range cases {
+		cl := c.ClassifyPath(tc.name, false)
+		if cl.Level != NoiseLevelYellow {
+			t.Errorf("%s: expected NoiseLevelYellow, got %d", tc.name, cl.Level)
 		}
-		if cat != CategoryTestFile {
-			t.Errorf("%s: expected CategoryTestFile, got %q", name, cat)
+		if cl.Category != CategoryTestFile {
+			t.Errorf("%s: expected CategoryTestFile, got %q", tc.name, cl.Category)
+		}
+		if cl.Pattern != tc.pattern {
+			t.Errorf("%s: expected pattern %q, got %q", tc.name, tc.pattern, cl.Pattern)
 		}
 	}
 }
@@ -109,12 +128,12 @@ func TestClassifyIDENoise(t *testing.T) {
 		{".vscode", true},
 	}
 	for _, tc := range cases {
-		level, cat := c.ClassifyPath(tc.name, tc.isDir)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, level)
+		cl := c.ClassifyPath(tc.name, tc.isDir)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, cl.Level)
 		}
-		if cat != CategoryIDEOS {
-			t.Errorf("%s: expected CategoryIDEOS, got %q", tc.name, cat)
+		if cl.Category != CategoryIDEOS {
+			t.Errorf("%s: expected CategoryIDEOS, got %q", tc.name, cl.Category)
 		}
 	}
 }
@@ -123,29 +142,39 @@ func TestClassifySignalFiles(t *testing.T) {
 	c := NewClassifier()
 	files := []string{"main.go", "README.md", "server.py", "index.ts"}
 	for _, name := range files {
-		level, _ := c.ClassifyPath(name, false)
-		if level != NoiseLevelNone {
-			t.Errorf("%s: expected NoiseLevelNone (signal), got %d", name, level)
+		cl := c.ClassifyPath(name, false)
+		if cl.Level != NoiseLevelNone {
+			t.Errorf("%s: expected NoiseLevelNone (signal), got %d", name, cl.Level)
 		}
 	}
 }
 
 func TestClassifyBinaryExtensions(t *testing.T) {
 	c := NewClassifier()
-	files := []string{"image.png", "photo.jpg", "archive.zip", "app.exe"}
-	for _, name := range files {
-		level, cat := c.ClassifyPath(name, false)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", name, level)
+	cases := []struct {
+		name    string
+		pattern string
+	}{
+		{"image.png", "*.png"},
+		{"photo.jpg", "*.jpg"},
+		{"archive.zip", "*.zip"},
+		{"app.exe", "*.exe"},
+	}
+	for _, tc := range cases {
+		cl := c.ClassifyPath(tc.name, false)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, cl.Level)
 		}
-		if cat != CategoryBinary {
-			t.Errorf("%s: expected CategoryBinary, got %q", name, cat)
+		if cl.Category != CategoryBinary {
+			t.Errorf("%s: expected CategoryBinary, got %q", tc.name, cl.Category)
+		}
+		if cl.Pattern != tc.pattern {
+			t.Errorf("%s: expected pattern %q, got %q", tc.name, tc.pattern, cl.Pattern)
 		}
 	}
 }
 
 func TestClassifyGeneratedContent(t *testing.T) {
-	// Create a temp file with generated marker
 	dir := t.TempDir()
 	path := filepath.Join(dir, "generated.go")
 	content := "// Code generated by protoc-gen-go. DO NOT EDIT.\npackage foo\n"
@@ -154,31 +183,30 @@ func TestClassifyGeneratedContent(t *testing.T) {
 	}
 
 	c := NewClassifier()
-	level, cat := c.ClassifyPath(path, false)
-	if level != NoiseLevelRed {
-		t.Errorf("expected NoiseLevelRed for generated content, got %d", level)
+	cl := c.ClassifyPath(path, false)
+	if cl.Level != NoiseLevelRed {
+		t.Errorf("expected NoiseLevelRed for generated content, got %d", cl.Level)
 	}
-	if cat != CategoryGenerated {
-		t.Errorf("expected CategoryGenerated, got %q", cat)
+	if cl.Category != CategoryGenerated {
+		t.Errorf("expected CategoryGenerated, got %q", cl.Category)
 	}
 }
 
 func TestClassifyBinaryContent(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "file.dat")
-	// Write binary content with null bytes
 	content := []byte{0x7f, 0x45, 0x4c, 0x46, 0x00, 0x01, 0x02, 0x03}
 	if err := os.WriteFile(path, content, 0644); err != nil {
 		t.Fatal(err)
 	}
 
 	c := NewClassifier()
-	level, cat := c.ClassifyPath(path, false)
-	if level != NoiseLevelRed {
-		t.Errorf("expected NoiseLevelRed for binary content, got %d", level)
+	cl := c.ClassifyPath(path, false)
+	if cl.Level != NoiseLevelRed {
+		t.Errorf("expected NoiseLevelRed for binary content, got %d", cl.Level)
 	}
-	if cat != CategoryBinary {
-		t.Errorf("expected CategoryBinary, got %q", cat)
+	if cl.Category != CategoryBinary {
+		t.Errorf("expected CategoryBinary, got %q", cl.Category)
 	}
 }
 
@@ -193,12 +221,12 @@ func TestClassifyTestArtifacts(t *testing.T) {
 		{"component.snap", false},
 	}
 	for _, tc := range cases {
-		level, cat := c.ClassifyPath(tc.name, tc.isDir)
-		if level != NoiseLevelRed {
-			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, level)
+		cl := c.ClassifyPath(tc.name, tc.isDir)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", tc.name, cl.Level)
 		}
-		if cat != CategoryTestArtifact {
-			t.Errorf("%s: expected CategoryTestArtifact, got %q", tc.name, cat)
+		if cl.Category != CategoryTestArtifact {
+			t.Errorf("%s: expected CategoryTestArtifact, got %q", tc.name, cl.Category)
 		}
 	}
 }

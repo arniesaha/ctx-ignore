@@ -76,6 +76,26 @@ func (s *Scanner) Scan() (*ScanResult, error) {
 	}
 	patternMap := map[patternKey]*NoisePattern{}
 
+	addNoiseDir := func(path, base string, cl Classification) {
+		dirTokens := countDirTokens(path)
+		noiseDirs[path] = true
+		key := patternKey{base + "/", cl.Level, cl.Category}
+		if p, ok := patternMap[key]; ok {
+			p.Tokens += dirTokens
+			p.Count++
+		} else {
+			patternMap[key] = &NoisePattern{
+				Pattern:  base + "/",
+				Tokens:   dirTokens,
+				Count:    1,
+				Level:    cl.Level,
+				Category: cl.Category,
+			}
+		}
+		result.TotalTokens += dirTokens
+		result.TotalFiles++
+	}
+
 	err := filepath.WalkDir(s.root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
@@ -84,28 +104,11 @@ func (s *Scanner) Scan() (*ScanResult, error) {
 		// Skip hidden dirs (except .idea, .vscode which we handle explicitly)
 		base := filepath.Base(path)
 		if d.IsDir() && strings.HasPrefix(base, ".") {
-			level, cat := s.classifier.ClassifyPath(path, true)
-			if level == NoiseLevelNone {
+			cl := s.classifier.ClassifyPath(path, true)
+			if cl.Level == NoiseLevelNone {
 				return filepath.SkipDir // skip other hidden dirs
 			}
-			// It's a noisy hidden dir — handle below
-			dirTokens := countDirTokens(path)
-			noiseDirs[path] = true
-			key := patternKey{base + "/", level, cat}
-			if p, ok := patternMap[key]; ok {
-				p.Tokens += dirTokens
-				p.Count++
-			} else {
-				patternMap[key] = &NoisePattern{
-					Pattern:  base + "/",
-					Tokens:   dirTokens,
-					Count:    1,
-					Level:    level,
-					Category: cat,
-				}
-			}
-			result.TotalTokens += dirTokens
-			result.TotalFiles++
+			addNoiseDir(path, base, cl)
 			return filepath.SkipDir
 		}
 
@@ -120,25 +123,9 @@ func (s *Scanner) Scan() (*ScanResult, error) {
 			if path == s.root {
 				return nil
 			}
-			level, cat := s.classifier.ClassifyPath(path, true)
-			if level > NoiseLevelNone {
-				dirTokens := countDirTokens(path)
-				noiseDirs[path] = true
-				key := patternKey{base + "/", level, cat}
-				if p, ok := patternMap[key]; ok {
-					p.Tokens += dirTokens
-					p.Count++
-				} else {
-					patternMap[key] = &NoisePattern{
-						Pattern:  base + "/",
-						Tokens:   dirTokens,
-						Count:    1,
-						Level:    level,
-						Category: cat,
-					}
-				}
-				result.TotalTokens += dirTokens
-				result.TotalFiles++
+			cl := s.classifier.ClassifyPath(path, true)
+			if cl.Level > NoiseLevelNone {
+				addNoiseDir(path, base, cl)
 				return filepath.SkipDir
 			}
 			return nil
@@ -149,26 +136,30 @@ func (s *Scanner) Scan() (*ScanResult, error) {
 		fileTokens, _ := tokens.CountFile(path)
 		result.TotalTokens += fileTokens
 
-		level, cat := s.classifier.ClassifyPath(path, false)
-		if level > NoiseLevelNone {
+		cl := s.classifier.ClassifyPath(path, false)
+		if cl.Level > NoiseLevelNone {
 			noiseItems = append(noiseItems, NoiseItem{
 				Path:     path,
 				Tokens:   fileTokens,
-				Level:    level,
-				Category: cat,
+				Level:    cl.Level,
+				Category: cl.Category,
 			})
-			// Aggregate by category/pattern
-			key := patternKey{base, level, cat}
+			// Use glob pattern for aggregation when available, otherwise filename
+			patternStr := base
+			if cl.Pattern != "" {
+				patternStr = cl.Pattern
+			}
+			key := patternKey{patternStr, cl.Level, cl.Category}
 			if p, ok := patternMap[key]; ok {
 				p.Tokens += fileTokens
 				p.Count++
 			} else {
 				patternMap[key] = &NoisePattern{
-					Pattern:  base,
+					Pattern:  patternStr,
 					Tokens:   fileTokens,
 					Count:    1,
-					Level:    level,
-					Category: cat,
+					Level:    cl.Level,
+					Category: cl.Category,
 				}
 			}
 		} else {

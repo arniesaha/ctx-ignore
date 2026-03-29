@@ -2,8 +2,10 @@
 package generator
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -44,7 +46,7 @@ func Generate(result *scanner.ScanResult, opts Options) ([]string, error) {
 	if opts.WriteContextIgnore {
 		content := buildContextIgnore(patterns)
 		if !opts.DryRun {
-			path := dir + "/.contextignore"
+			path := filepath.Join(dir, ".contextignore")
 			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 				return generated, fmt.Errorf("writing .contextignore: %w", err)
 			}
@@ -55,7 +57,7 @@ func Generate(result *scanner.ScanResult, opts Options) ([]string, error) {
 	if opts.WriteClaudeIgnore {
 		content := buildDerivedIgnore(patterns)
 		if !opts.DryRun {
-			path := dir + "/.claudeignore"
+			path := filepath.Join(dir, ".claudeignore")
 			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 				return generated, fmt.Errorf("writing .claudeignore: %w", err)
 			}
@@ -66,7 +68,7 @@ func Generate(result *scanner.ScanResult, opts Options) ([]string, error) {
 	if opts.WriteCursorIgnore {
 		content := buildDerivedIgnore(patterns)
 		if !opts.DryRun {
-			path := dir + "/.cursorignore"
+			path := filepath.Join(dir, ".cursorignore")
 			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 				return generated, fmt.Errorf("writing .cursorignore: %w", err)
 			}
@@ -154,17 +156,24 @@ func buildDerivedIgnore(groups []patternGroup) string {
 }
 
 func patchGitIgnore(dir string, groups []patternGroup) error {
-	path := dir + "/.gitignore"
+	path := filepath.Join(dir, ".gitignore")
 	existing := ""
 	data, err := os.ReadFile(path)
 	if err == nil {
 		existing = string(data)
 	}
 
+	// Build set of existing lines for exact matching
+	existingLines := map[string]bool{}
+	sc := bufio.NewScanner(strings.NewReader(existing))
+	for sc.Scan() {
+		existingLines[strings.TrimSpace(sc.Text())] = true
+	}
+
 	var toAdd []string
 	for _, g := range groups {
 		for _, p := range g.patterns {
-			if !strings.Contains(existing, p) {
+			if !existingLines[p] {
 				toAdd = append(toAdd, p)
 			}
 		}

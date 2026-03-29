@@ -2,7 +2,12 @@
 // For v0.1, we use a character-based approximation: 1 token ≈ 4 chars.
 package tokens
 
-import "os"
+import (
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+)
 
 const charsPerToken = 4
 
@@ -31,32 +36,20 @@ func CountBytes(bytes int64) int64 {
 func FormatTokens(n int64) string {
 	switch {
 	case n >= 1_000_000:
-		return formatFloat(float64(n)/1_000_000) + "M"
+		return formatCompact(float64(n)/1_000_000) + "M"
 	case n >= 1_000:
-		return formatFloat(float64(n)/1_000) + "K"
+		return formatCompact(float64(n)/1_000) + "K"
 	default:
-		return formatInt(n)
+		return strconv.FormatInt(n, 10)
 	}
 }
 
-func formatFloat(f float64) string {
-	// Simple formatting: up to 1 decimal place
-	i := int64(f)
-	d := int64((f - float64(i)) * 10)
-	if d == 0 {
-		return formatInt(i)
+// formatCompact formats a float with up to 1 decimal place, trimming ".0".
+func formatCompact(f float64) string {
+	// Truncate to 1 decimal place
+	f = math.Floor(f*10) / 10
+	if f == math.Floor(f) {
+		return strconv.FormatInt(int64(f), 10)
 	}
-	return formatInt(i) + "." + formatInt(d)
-}
-
-func formatInt(n int64) string {
-	if n == 0 {
-		return "0"
-	}
-	result := ""
-	for n > 0 {
-		result = string(rune('0'+n%10)) + result
-		n /= 10
-	}
-	return result
+	return fmt.Sprintf("%.1f", f)
 }

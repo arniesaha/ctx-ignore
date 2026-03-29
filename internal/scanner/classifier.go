@@ -31,13 +31,13 @@ const (
 	CategoryIDEOS         NoiseCategory = "IDE/OS noise"
 )
 
-// Result holds classification info for a single file or directory.
-type Result struct {
-	Path     string
-	IsDir    bool
+// Classification holds the result of classifying a file or directory.
+type Classification struct {
 	Level    NoiseLevel
 	Category NoiseCategory
-	Tokens   int64
+	// Pattern is the glob pattern for aggregation (e.g., "*_test.go", "*.min.js").
+	// Empty for exact-match items like lockfiles or named directories.
+	Pattern string
 }
 
 // Classifier classifies files/dirs by noise level.
@@ -124,7 +124,7 @@ var binaryExtensions = map[string]bool{
 }
 
 // ClassifyPath classifies a single path (file or dir).
-func (c *Classifier) ClassifyPath(path string, isDir bool) (NoiseLevel, NoiseCategory) {
+func (c *Classifier) ClassifyPath(path string, isDir bool) Classification {
 	base := filepath.Base(path)
 
 	if isDir {
@@ -133,33 +133,33 @@ func (c *Classifier) ClassifyPath(path string, isDir bool) (NoiseLevel, NoiseCat
 	return c.classifyFile(path, base)
 }
 
-func (c *Classifier) classifyDir(name string) (NoiseLevel, NoiseCategory) {
+func (c *Classifier) classifyDir(name string) Classification {
 	if info, ok := noiseDirNames[name]; ok {
-		return info.level, info.category
+		return Classification{Level: info.level, Category: info.category}
 	}
-	return NoiseLevelNone, ""
+	return Classification{}
 }
 
-func (c *Classifier) classifyFile(path, base string) (NoiseLevel, NoiseCategory) {
+func (c *Classifier) classifyFile(path, base string) Classification {
 	// Check exact filename matches
 	if info, ok := noiseFileNames[base]; ok {
-		return info.level, info.category
+		return Classification{Level: info.level, Category: info.category}
 	}
 
 	// Check lockfiles
 	if lockfileNames[base] {
-		return NoiseLevelRed, CategoryLockfile
+		return Classification{Level: NoiseLevelRed, Category: CategoryLockfile}
 	}
 
 	// Check generated patterns: *.generated.*
 	if isGeneratedName(base) {
-		return NoiseLevelRed, CategoryGenerated
+		return Classification{Level: NoiseLevelRed, Category: CategoryGenerated, Pattern: "*.generated.*"}
 	}
 
 	// Check test file suffixes (yellow)
 	for _, suffix := range testFileSuffixes {
 		if strings.HasSuffix(base, suffix) {
-			return NoiseLevelYellow, CategoryTestFile
+			return Classification{Level: NoiseLevelYellow, Category: CategoryTestFile, Pattern: "*" + suffix}
 		}
 	}
 
@@ -170,26 +170,26 @@ func (c *Classifier) classifyFile(path, base string) (NoiseLevel, NoiseCategory)
 		lower := strings.ToLower(base)
 		for compExt, info := range noiseFileExts {
 			if strings.HasSuffix(lower, compExt) {
-				return info.level, info.category
+				return Classification{Level: info.level, Category: info.category, Pattern: "*" + compExt}
 			}
 		}
 
 		if binary, ok := binaryExtensions[ext]; ok && binary {
-			return NoiseLevelRed, CategoryBinary
+			return Classification{Level: NoiseLevelRed, Category: CategoryBinary, Pattern: "*" + ext}
 		}
 	}
 
 	// Check file content for generated markers
 	if isGeneratedContent(path) {
-		return NoiseLevelRed, CategoryGenerated
+		return Classification{Level: NoiseLevelRed, Category: CategoryGenerated}
 	}
 
 	// Check binary content via sniff
 	if isBinaryFile(path) {
-		return NoiseLevelRed, CategoryBinary
+		return Classification{Level: NoiseLevelRed, Category: CategoryBinary}
 	}
 
-	return NoiseLevelNone, ""
+	return Classification{}
 }
 
 func isGeneratedName(base string) bool {

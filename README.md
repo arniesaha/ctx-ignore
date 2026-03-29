@@ -3,7 +3,7 @@
 > Scan your repo. Generate `.claudeignore`, `.cursorignore`, and `.contextignore`. Keep your AI coding tools focused on what matters.
 
 ```bash
-brew install arniesaha/tap/ctx-ignore
+go install github.com/arniesaha/ctx-ignore/cmd/ctx-ignore@latest
 ctx-ignore scan ./my-repo
 ```
 
@@ -40,17 +40,20 @@ Optionally patches `.gitignore` too.
 
 ```bash
 ctx-ignore scan [path]     # Scan repo, show ranked noise report + generate ignore files
-ctx-ignore stats [path]    # Show token cost breakdown by file
-ctx-ignore diff [path]     # Compare token usage before vs after .contextignore
-ctx-ignore init            # Generate ignore files from sensible defaults (no scan)
 ```
+
+**Flags:**
+- `--dry-run` — Print report only, don't write files
+- `--no-claude` — Skip `.claudeignore` generation
+- `--no-cursor` — Skip `.cursorignore` generation
+- `--patch-gitignore` — Also update `.gitignore`
 
 ## Example output
 
 ```
 ctx-ignore scan .
 
-Scanning 847 files...
+Scanned 847 files in /home/user/my-repo
 
 NOISE (recommended to ignore):
   🔴 package-lock.json        — 42,310 tokens  lockfile, auto-generated
@@ -76,14 +79,7 @@ Generated:
 ## Install
 
 ```bash
-# macOS / Linux (Homebrew)
-brew install arniesaha/tap/ctx-ignore
-
-# Linux (curl)
-curl -sSf https://install.ctx-ignore.dev | sh
-
-# Go
-go install github.com/arniesaha/ctx-ignore@latest
+go install github.com/arniesaha/ctx-ignore/cmd/ctx-ignore@latest
 ```
 
 ## Philosophy

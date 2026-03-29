@@ -21,8 +21,9 @@ func main() {
 
 func rootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:   "ctx-ignore",
-		Short: "Generate .claudeignore, .cursorignore, .contextignore for your repo",
+		Use:     "ctx-ignore",
+		Short:   "Generate .claudeignore, .cursorignore, .contextignore for your repo",
+		Version: "0.1.0",
 		Long: `ctx-ignore scans your repository and generates ignore files to keep
 AI coding tools focused on signal, not noise.`,
 	}
@@ -53,15 +54,13 @@ and generate .contextignore, .claudeignore, and .cursorignore files.`,
 				return fmt.Errorf("resolving path: %w", err)
 			}
 
-			fmt.Printf("Scanning %s...\n\n", abs)
-
 			s := scanner.New(abs)
 			result, err := s.Scan()
 			if err != nil {
 				return fmt.Errorf("scanning: %w", err)
 			}
 
-			fmt.Printf("Scanning %d files...\n\n", result.TotalFiles)
+			fmt.Printf("Scanned %d files in %s\n\n", result.TotalFiles, abs)
 
 			// Print noise report
 			if len(result.NoisePatterns) == 0 {
