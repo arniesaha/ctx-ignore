@@ -37,13 +37,14 @@ func scanCmd() *cobra.Command {
 	var noClaude bool
 	var noCursor bool
 	var noCopilot bool
+	var noWindsurf bool
 	var patchGitIgnore bool
 
 	cmd := &cobra.Command{
 		Use:   "scan [path]",
 		Short: "Scan a repo and generate ignore files",
 		Long: `Scan a repository, classify files by LLM usefulness,
-and generate .contextignore, .claudeignore, and .cursorignore files.`,
+and generate .contextignore, .claudeignore, .cursorignore, .copilotignore, and .windsurfignore files.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root := "."
@@ -139,6 +140,7 @@ and generate .contextignore, .claudeignore, and .cursorignore files.`,
 			opts.WriteClaudeIgnore = !noClaude
 			opts.WriteCursorIgnore = !noCursor
 			opts.WriteCopilotIgnore = !noCopilot
+			opts.WriteWindsurfIgnore = !noWindsurf
 			opts.PatchGitIgnore = patchGitIgnore
 			opts.DryRun = dryRun
 			opts.OutputDir = abs
@@ -157,6 +159,7 @@ and generate .contextignore, .claudeignore, and .cursorignore files.`,
 	cmd.Flags().BoolVar(&noClaude, "no-claude", false, "Skip .claudeignore generation")
 	cmd.Flags().BoolVar(&noCursor, "no-cursor", false, "Skip .cursorignore generation")
 	cmd.Flags().BoolVar(&noCopilot, "no-copilot", false, "Skip .copilotignore generation")
+	cmd.Flags().BoolVar(&noWindsurf, "no-windsurf", false, "Skip .windsurfignore generation")
 	cmd.Flags().BoolVar(&patchGitIgnore, "patch-gitignore", false, "Also patch .gitignore")
 
 	return cmd
