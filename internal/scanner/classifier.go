@@ -60,6 +60,7 @@ var lockfileNames = map[string]bool{
 	"composer.lock":     true,
 	"Pipfile.lock":      true,
 	"bun.lockb":         true,
+	"uv.lock":           true,
 }
 
 // noiseDirNames are directory names that are always noise.
@@ -67,18 +68,28 @@ var noiseDirNames = map[string]struct {
 	level    NoiseLevel
 	category NoiseCategory
 }{
-	"node_modules":  {NoiseLevelRed, CategoryDependency},
-	"vendor":        {NoiseLevelRed, CategoryDependency},
-	".venv":         {NoiseLevelRed, CategoryDependency},
-	"venv":          {NoiseLevelRed, CategoryDependency},
-	"dist":          {NoiseLevelRed, CategoryBuildArtifact},
-	"build":         {NoiseLevelRed, CategoryBuildArtifact},
-	"out":           {NoiseLevelRed, CategoryBuildArtifact},
-	"target":        {NoiseLevelRed, CategoryBuildArtifact},
-	"coverage":      {NoiseLevelRed, CategoryTestArtifact},
-	"__snapshots__": {NoiseLevelRed, CategoryTestArtifact},
-	".idea":         {NoiseLevelRed, CategoryIDEOS},
-	".vscode":       {NoiseLevelRed, CategoryIDEOS},
+	"node_modules":    {NoiseLevelRed, CategoryDependency},
+	"vendor":          {NoiseLevelRed, CategoryDependency},
+	".venv":           {NoiseLevelRed, CategoryDependency},
+	"venv":            {NoiseLevelRed, CategoryDependency},
+	".terraform":      {NoiseLevelRed, CategoryDependency},
+	"dist":            {NoiseLevelRed, CategoryBuildArtifact},
+	"build":           {NoiseLevelRed, CategoryBuildArtifact},
+	"out":             {NoiseLevelRed, CategoryBuildArtifact},
+	"target":          {NoiseLevelRed, CategoryBuildArtifact},
+	".next":           {NoiseLevelRed, CategoryBuildArtifact},
+	".nuxt":           {NoiseLevelRed, CategoryBuildArtifact},
+	"__pycache__":     {NoiseLevelRed, CategoryBuildArtifact},
+	"storybook-static": {NoiseLevelRed, CategoryBuildArtifact},
+	".turbo":          {NoiseLevelRed, CategoryBuildArtifact},
+	".cache":          {NoiseLevelRed, CategoryBuildArtifact},
+	".parcel-cache":   {NoiseLevelRed, CategoryBuildArtifact},
+	"coverage":        {NoiseLevelRed, CategoryTestArtifact},
+	"__snapshots__":   {NoiseLevelRed, CategoryTestArtifact},
+	".pytest_cache":   {NoiseLevelRed, CategoryTestArtifact},
+	".idea":           {NoiseLevelRed, CategoryIDEOS},
+	".vscode":         {NoiseLevelRed, CategoryIDEOS},
+	".mypy_cache":     {NoiseLevelRed, CategoryIDEOS},
 }
 
 // noiseFileExts maps extensions to noise info.
@@ -92,6 +103,8 @@ var noiseFileExts = map[string]struct {
 	".swp":     {NoiseLevelRed, CategoryIDEOS},
 	".log":     {NoiseLevelRed, CategoryIDEOS},
 	".pb.go":   {NoiseLevelRed, CategoryGenerated},
+	".pb.py":   {NoiseLevelRed, CategoryGenerated},
+	".pb.ts":   {NoiseLevelRed, CategoryGenerated},
 }
 
 // noiseFileNames maps exact filenames to noise info.
@@ -99,7 +112,8 @@ var noiseFileNames = map[string]struct {
 	level    NoiseLevel
 	category NoiseCategory
 }{
-	".DS_Store": {NoiseLevelRed, CategoryIDEOS},
+	".DS_Store":  {NoiseLevelRed, CategoryIDEOS},
+	"Thumbs.db":  {NoiseLevelRed, CategoryIDEOS},
 }
 
 // testFilePatterns are suffix patterns that indicate test files.
