@@ -17,6 +17,7 @@ type Options struct {
 	WriteContextIgnore bool
 	WriteClaudeIgnore  bool
 	WriteCursorIgnore  bool
+	WriteCopilotIgnore bool
 	PatchGitIgnore     bool
 	DryRun             bool
 	OutputDir          string
@@ -28,6 +29,7 @@ func DefaultOptions() Options {
 		WriteContextIgnore: true,
 		WriteClaudeIgnore:  true,
 		WriteCursorIgnore:  true,
+		WriteCopilotIgnore: true,
 		PatchGitIgnore:     false,
 		DryRun:             false,
 	}
@@ -74,6 +76,17 @@ func Generate(result *scanner.ScanResult, opts Options) ([]string, error) {
 			}
 		}
 		generated = append(generated, ".cursorignore")
+	}
+
+	if opts.WriteCopilotIgnore {
+		content := buildDerivedIgnore(patterns)
+		if !opts.DryRun {
+			path := filepath.Join(dir, ".copilotignore")
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+				return generated, fmt.Errorf("writing .copilotignore: %w", err)
+			}
+		}
+		generated = append(generated, ".copilotignore")
 	}
 
 	if opts.PatchGitIgnore {

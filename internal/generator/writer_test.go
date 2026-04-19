@@ -93,12 +93,12 @@ func TestGenerateDryRunWritesNoFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(generated) != 3 {
-		t.Errorf("expected 3 generated names, got %d", len(generated))
+	if len(generated) != 4 {
+		t.Errorf("expected 4 generated names, got %d", len(generated))
 	}
 
 	// Verify no files were actually created
-	for _, name := range []string{".contextignore", ".claudeignore", ".cursorignore"} {
+	for _, name := range []string{".contextignore", ".claudeignore", ".cursorignore", ".copilotignore"} {
 		path := filepath.Join(dir, name)
 		if _, err := os.Stat(path); err == nil {
 			t.Errorf("dry run should not create %s", name)
@@ -119,11 +119,11 @@ func TestGenerateCreatesAllFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(generated) != 3 {
-		t.Fatalf("expected 3 generated, got %d: %v", len(generated), generated)
+	if len(generated) != 4 {
+		t.Fatalf("expected 4 generated, got %d: %v", len(generated), generated)
 	}
 
-	for _, name := range []string{".contextignore", ".claudeignore", ".cursorignore"} {
+	for _, name := range []string{".contextignore", ".claudeignore", ".cursorignore", ".copilotignore"} {
 		path := filepath.Join(dir, name)
 		data, err := os.ReadFile(path)
 		if err != nil {
