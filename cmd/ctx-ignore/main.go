@@ -36,6 +36,7 @@ func scanCmd() *cobra.Command {
 	var dryRun bool
 	var noClaude bool
 	var noCursor bool
+	var noCopilot bool
 	var patchGitIgnore bool
 
 	cmd := &cobra.Command{
@@ -137,6 +138,7 @@ and generate .contextignore, .claudeignore, and .cursorignore files.`,
 			opts := generator.DefaultOptions()
 			opts.WriteClaudeIgnore = !noClaude
 			opts.WriteCursorIgnore = !noCursor
+			opts.WriteCopilotIgnore = !noCopilot
 			opts.PatchGitIgnore = patchGitIgnore
 			opts.DryRun = dryRun
 			opts.OutputDir = abs
@@ -154,6 +156,7 @@ and generate .contextignore, .claudeignore, and .cursorignore files.`,
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Print report only, don't write files")
 	cmd.Flags().BoolVar(&noClaude, "no-claude", false, "Skip .claudeignore generation")
 	cmd.Flags().BoolVar(&noCursor, "no-cursor", false, "Skip .cursorignore generation")
+	cmd.Flags().BoolVar(&noCopilot, "no-copilot", false, "Skip .copilotignore generation")
 	cmd.Flags().BoolVar(&patchGitIgnore, "patch-gitignore", false, "Also patch .gitignore")
 
 	return cmd
