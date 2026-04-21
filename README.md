@@ -78,6 +78,30 @@ Generated:
 
 ## Install
 
+### Pre-built binary (recommended)
+
+Download the latest binary from [GitHub Releases](https://github.com/arniesaha/ctx-ignore/releases/latest):
+
+**macOS (Apple Silicon)**
+```bash
+curl -L https://github.com/arniesaha/ctx-ignore/releases/latest/download/ctx-ignore_Darwin_arm64.tar.gz | tar xz
+sudo mv ctx-ignore /usr/local/bin/
+```
+
+**macOS (Intel)**
+```bash
+curl -L https://github.com/arniesaha/ctx-ignore/releases/latest/download/ctx-ignore_Darwin_amd64.tar.gz | tar xz
+sudo mv ctx-ignore /usr/local/bin/
+```
+
+**Linux (amd64)**
+```bash
+curl -L https://github.com/arniesaha/ctx-ignore/releases/latest/download/ctx-ignore_Linux_amd64.tar.gz | tar xz
+sudo mv ctx-ignore /usr/local/bin/
+```
+
+### Go install
+
 ```bash
 go install github.com/arniesaha/ctx-ignore/cmd/ctx-ignore@latest
 ```
