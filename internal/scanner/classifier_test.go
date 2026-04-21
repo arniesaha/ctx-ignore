@@ -210,6 +210,61 @@ func TestClassifyBinaryContent(t *testing.T) {
 	}
 }
 
+func TestClassifyNewNoisePatterns(t *testing.T) {
+	c := NewClassifier()
+
+	// Directories that should be NoiseLevelRed
+	redDirs := []struct {
+		name     string
+		category NoiseCategory
+	}{
+		{".terraform", CategoryDependency},
+		{".next", CategoryBuildArtifact},
+		{"__pycache__", CategoryBuildArtifact},
+		{".pytest_cache", CategoryTestArtifact},
+		{".turbo", CategoryBuildArtifact},
+	}
+	for _, tc := range redDirs {
+		cl := c.ClassifyPath(tc.name, true)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("dir %s: expected NoiseLevelRed, got %d", tc.name, cl.Level)
+		}
+		if cl.Category != tc.category {
+			t.Errorf("dir %s: expected category %q, got %q", tc.name, tc.category, cl.Category)
+		}
+	}
+
+	// uv.lock should be a lockfile
+	cl := c.ClassifyPath("uv.lock", false)
+	if cl.Level != NoiseLevelRed {
+		t.Errorf("uv.lock: expected NoiseLevelRed, got %d", cl.Level)
+	}
+	if cl.Category != CategoryLockfile {
+		t.Errorf("uv.lock: expected CategoryLockfile, got %q", cl.Category)
+	}
+
+	// Thumbs.db should be IDE/OS noise
+	cl = c.ClassifyPath("Thumbs.db", false)
+	if cl.Level != NoiseLevelRed {
+		t.Errorf("Thumbs.db: expected NoiseLevelRed, got %d", cl.Level)
+	}
+	if cl.Category != CategoryIDEOS {
+		t.Errorf("Thumbs.db: expected CategoryIDEOS, got %q", cl.Category)
+	}
+
+	// .pb.py and .pb.ts extensions should be generated
+	pbFiles := []string{"api.pb.py", "schema.pb.ts"}
+	for _, name := range pbFiles {
+		cl := c.ClassifyPath(name, false)
+		if cl.Level != NoiseLevelRed {
+			t.Errorf("%s: expected NoiseLevelRed, got %d", name, cl.Level)
+		}
+		if cl.Category != CategoryGenerated {
+			t.Errorf("%s: expected CategoryGenerated, got %q", name, cl.Category)
+		}
+	}
+}
+
 func TestClassifyTestArtifacts(t *testing.T) {
 	c := NewClassifier()
 	cases := []struct {
