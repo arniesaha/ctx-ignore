@@ -1,6 +1,6 @@
 # ctx-ignore
 
-> Scan your repo. Generate `.claudeignore`, `.cursorignore`, and `.contextignore`. Keep your AI coding tools focused on what matters.
+> Scan your repo. Generate `.claudeignore`, `.cursorignore`, `.copilotignore`, `.windsurfignore`, and `.contextignore`. Keep your AI coding tools focused on what matters.
 
 ```bash
 go install github.com/arniesaha/ctx-ignore/cmd/ctx-ignore@latest
@@ -33,6 +33,8 @@ ctx-ignore scan ./my-repo
 | `.contextignore` | Source of truth — annotated, human-readable |
 | `.claudeignore` | Claude Code |
 | `.cursorignore` | Cursor |
+| `.copilotignore` | GitHub Copilot |
+| `.windsurfignore` | Windsurf (Codeium) |
 
 Optionally patches `.gitignore` too.
 
@@ -46,6 +48,8 @@ ctx-ignore scan [path]     # Scan repo, show ranked noise report + generate igno
 - `--dry-run` — Print report only, don't write files
 - `--no-claude` — Skip `.claudeignore` generation
 - `--no-cursor` — Skip `.cursorignore` generation
+- `--no-copilot` — Skip `.copilotignore` generation
+- `--no-windsurf` — Skip `.windsurfignore` generation
 - `--patch-gitignore` — Also update `.gitignore`
 
 ## Example output
@@ -74,6 +78,8 @@ Generated:
   ✅ .contextignore
   ✅ .claudeignore
   ✅ .cursorignore
+  ✅ .copilotignore
+  ✅ .windsurfignore
 ```
 
 ## Install
@@ -111,11 +117,11 @@ go install github.com/arniesaha/ctx-ignore/cmd/ctx-ignore@latest
 - **Setup time, not query time.** Fix the problem once, don't patch it on every request.
 - **Explain the why.** Every ignored pattern has a reason — the `.contextignore` file is human-readable and editable.
 - **Zero dependencies.** Single binary, no config required, works on any repo.
-- **Tool-agnostic.** Claude Code, Cursor, Copilot — one source of truth, multiple output formats.
+- **Tool-agnostic.** Claude Code, Cursor, Copilot, Windsurf — one source of truth, multiple output formats.
 
 ## Status
 
-🚧 v0.1 in development
+v0.1.0
 
 ---
 
