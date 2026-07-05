@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Deprecated.** ctx-ignore now lives on as an Agent Skill in [ctxops](https://github.com/arniesaha/ctxops): your coding agent scans the repo and writes these ignore files itself, so no binary install is needed. This CLI remains usable as-is but is no longer maintained.
+
 # ctx-ignore
 
 > Scan your repo. Generate `.claudeignore`, `.cursorignore`, `.copilotignore`, `.windsurfignore`, and `.contextignore`. Keep your AI coding tools focused on what matters.
